@@ -1,0 +1,8 @@
+{
+  "name": "Gemini Workspace",
+  "description": "A responsive full-stack ChatGPT-style assistant powered by Google Gemini, offering real-time stream buffers, fine-grained temperature slates, inline attachment analyzers, and categorized preset prompts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
