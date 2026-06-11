@@ -208,11 +208,18 @@ export default function ChatInput({ onSendMessage, isGenerating, initialValue = 
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={isGenerating ? "Processing reply / thinking..." : "Ask me anything... (Drop images/files here)"}
+            placeholder={isGenerating ? "Processing reply / thinking..." : "Ask me anything... (Drop files/images to attach)"}
             disabled={isGenerating}
             className="flex-1 py-2 px-1 text-[15px] text-neutral-800 bg-transparent outline-none border-none resize-none min-h-[38px] max-h-[200px] leading-relaxed placeholder:text-neutral-400"
             id="chat-textarea"
           />
+
+          {/* Focus indicator badge */}
+          {!isGenerating && (
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-medium text-neutral-400 bg-neutral-50 border border-neutral-200 rounded self-center select-none mr-1 shrink-0">
+              Ctrl+K
+            </kbd>
+          )}
 
           {/* Action trigger Button */}
           <button

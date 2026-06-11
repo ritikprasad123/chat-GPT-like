@@ -114,11 +114,14 @@ export default function Sidebar({
               onCreateConversation();
               onClose();
             }}
-            className="flex items-center justify-center gap-2 w-full py-2.5 px-3 bg-white hover:bg-neutral-100 text-neutral-900 font-semibold text-sm rounded-xl transition-all cursor-pointer shadow-sm active:scale-[0.98]"
+            className="flex items-center gap-2 w-full py-2.5 px-3 bg-white hover:bg-neutral-100 text-neutral-900 font-semibold text-sm rounded-xl transition-all cursor-pointer shadow-sm active:scale-[0.98]"
             id="new-chat-sidebar-btn"
           >
             <Plus size={16} />
             <span>New Chat</span>
+            <kbd className="hidden sm:inline-flex ml-auto items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-medium text-neutral-400 bg-neutral-50 border border-neutral-200 rounded shrink-0">
+              Ctrl+N
+            </kbd>
           </button>
         </div>
 

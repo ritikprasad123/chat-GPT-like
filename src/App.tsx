@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Menu, Plus, Sparkles, RefreshCw, Trash2, Heart, ShieldAlert } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Menu, Plus, Sparkles, RefreshCw, Trash2, Heart, ShieldAlert, Download, Printer, FileDown, ChevronDown } from 'lucide-react';
 import { Conversation, Message, Attachment, SUPPORTED_MODELS } from './types';
 import Sidebar from './components/Sidebar';
 import MessageList from './components/MessageList';
@@ -130,6 +130,39 @@ export default function App() {
   const handleApplyPresetPrompt = (text: string) => {
     setPresetInputValue(text);
   };
+
+  // Keyboard shortcut state syncing
+  const createNewChatRef = useRef(handleCreateNewConversation);
+  useEffect(() => {
+    createNewChatRef.current = handleCreateNewConversation;
+  }, [handleCreateNewConversation]);
+
+  useEffect(() => {
+    const handleGlobalShortcuts = (e: KeyboardEvent) => {
+      // 1. Focus input (Ctrl/Cmd + K)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        const textarea = document.getElementById('chat-textarea');
+        if (textarea) {
+          e.preventDefault();
+          textarea.focus();
+        }
+      }
+
+      // 2. Start new conversation (Ctrl/Cmd + N or Alt/Option + N)
+      if (
+        ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'n') ||
+        (e.altKey && e.key.toLowerCase() === 'n')
+      ) {
+        e.preventDefault();
+        createNewChatRef.current();
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalShortcuts);
+    return () => {
+      window.removeEventListener('keydown', handleGlobalShortcuts);
+    };
+  }, []);
 
   const handleSendMessage = async (userContent: string, attachments: Attachment[]) => {
     if (isGenerating) return;
@@ -332,6 +365,60 @@ export default function App() {
     }
   };
 
+  const [showExportMenu, setShowExportMenu] = useState(false);
+
+  const handleExportMarkdown = () => {
+    if (!activeConversation) return;
+
+    let content = `# ${activeConversation.title || 'Conversation Transcript'}\n\n`;
+    content += `*Exported from Gemini Workspace on ${new Date().toLocaleDateString()}*\n`;
+    content += `*Model:* ${SUPPORTED_MODELS.find(m => m.id === activeModel)?.name || activeModel}\n`;
+    if (activeConversation.systemInstruction) {
+      content += `*System Prompt:* "${activeConversation.systemInstruction}"\n`;
+    }
+    content += `\n---\n\n`;
+
+    activeConversation.messages.forEach((msg) => {
+      const roleName = msg.role === 'user' ? '👤 **You**' : '✨ **Assistant**';
+      const timeStr = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      content += `### ${roleName} *(${timeStr})*\n\n`;
+
+      if (msg.attachments && msg.attachments.length > 0) {
+        content += `*Attachments:*\n`;
+        msg.attachments.forEach((att) => {
+          content += `- \`${att.name}\` (${att.mimeType})\n`;
+        });
+        content += `\n`;
+      }
+
+      content += `${msg.content}\n\n---\n\n`;
+    });
+
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+
+    const safeTitle = (activeConversation.title || 'chat-transcript')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, '');
+
+    link.setAttribute('download', `${safeTitle || 'conversation'}-${Date.now()}.md`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    setShowExportMenu(false);
+  };
+
+  const handlePrintPDF = () => {
+    setShowExportMenu(false);
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
   const activeConversation = conversations.find((c) => c.id === activeConversationId) || null;
 
   return (
@@ -394,6 +481,59 @@ export default function App() {
           </div>
 
           <div className="flex items-center gap-2">
+            {activeConversation && activeConversation.messages.length > 0 && (
+              <div className="relative" id="topbar-export-container">
+                <button
+                  onClick={() => setShowExportMenu(!showExportMenu)}
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs bg-white hover:bg-neutral-50 text-neutral-700 hover:text-neutral-900 font-semibold rounded-xl border border-neutral-200 transition-all cursor-pointer shadow-xs active:scale-[0.98]"
+                  title="Export Chat History"
+                  id="topbar-export-btn"
+                >
+                  <FileDown size={14} className="text-neutral-500" />
+                  <span>Export</span>
+                  <ChevronDown size={10} className={`transition-transform duration-200 ${showExportMenu ? 'rotate-180' : ''}`} />
+                </button>
+
+                {showExportMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setShowExportMenu(false)}
+                      id="export-clickaway-shield"
+                    />
+                    <div
+                      className="absolute right-0 mt-1.5 w-48 bg-white border border-neutral-200 rounded-xl shadow-lg py-1.5 z-50 text-xs text-neutral-800 animate-fade-in"
+                      id="export-dropdown-menu"
+                    >
+                      <button
+                        onClick={handleExportMarkdown}
+                        className="flex items-center gap-2.5 w-full text-left px-3 py-2 hover:bg-neutral-50 hover:text-neutral-950 font-medium cursor-pointer transition-colors"
+                        id="btn-export-markdown"
+                      >
+                        <Download size={14} className="text-indigo-500" />
+                        <div>
+                          <p className="font-semibold text-neutral-800">Save Markdown (.md)</p>
+                          <p className="text-[9px] text-neutral-400 font-sans">Raw formatted text file</p>
+                        </div>
+                      </button>
+
+                      <button
+                        onClick={handlePrintPDF}
+                        className="flex items-center gap-2.5 w-full text-left px-3 py-2 hover:bg-neutral-50 hover:text-neutral-950 font-medium cursor-pointer transition-colors border-t border-neutral-100"
+                        id="btn-export-pdf"
+                      >
+                        <Printer size={14} className="text-pink-500" />
+                        <div>
+                          <p className="font-semibold text-neutral-800">Print / Save as PDF (.pdf)</p>
+                          <p className="text-[9px] text-neutral-400 font-sans">Universal PDF document</p>
+                        </div>
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+
             {/* Fast direct "New Chat" icon trigger */}
             <button
               onClick={handleCreateNewConversation}

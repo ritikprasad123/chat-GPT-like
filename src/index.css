@@ -57,3 +57,75 @@
 .prose code {
   font-family: var(--font-mono);
 }
+
+/* @media print modifications for elegant PDF/Archival outputs */
+@media print {
+  /* Hide all interactive, non-content browser controls */
+  #app-sidebar,
+  #chat-input-form,
+  #backend-warning,
+  #sidebar-toggle-btn,
+  #topbar-new-chat-btn,
+  #welcome-dashboard,
+  #presets-grid,
+  #msg-actions,
+  #msg-actions button,
+  #topbar-export-btn,
+  header button,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Reset main app scroll restrictions for native paging */
+  html, body, #root, #app-root {
+    height: auto !important;
+    overflow: visible !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  #chat-workspace {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+  }
+
+  #message-list-container {
+    height: auto !important;
+    overflow: visible !important;
+    display: block !important;
+    background: transparent !important;
+  }
+
+  /* Make sure every message displays fully without truncation */
+  div[id^="msg-"] {
+    break-inside: avoid;
+    background: white !important;
+    border-bottom: 1px solid #e5e5e5 !important;
+    padding: 1.5rem 0 !important;
+  }
+
+  /* Standard print typography rules */
+  .prose {
+    max-width: 100% !important;
+    font-size: 11pt !important;
+    line-height: 1.6 !important;
+  }
+
+  /* Code blocks formatting for paper compatibility */
+  .prose pre {
+    background-color: #f4f4f5 !important;
+    color: #18181b !important;
+    border: 1px solid #e4e4e7 !important;
+    page-break-inside: avoid;
+    white-space: pre-wrap !important;
+  }
+
+  /* Ensure URL links are readable if helpful */
+  a[href]:after {
+    content: " (" attr(href) ")";
+    font-size: 80%;
+    color: #555555;
+  }
+}
+
